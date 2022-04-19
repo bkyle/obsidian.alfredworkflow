@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# fixpath
+#
+# Given the absolute path to a file in a vault, return the path that Obsidian
+# will know the path as. This addresses issues where there are one or more
+# symbolic links required to get to files in the vault.
+#
+# ~/bkyle/Vaults/Notes -> ~/iCloud/Notes -> ~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Notes
+
+[ -e /usr/local/bin/realpath ] || (echo "/usr/local/bin/realpath does not exist"; exit 1)
+
+# ``vault_dir`` contains the expanded path to the vault with symbolic links in
+# place. This is the path that Obsidian will know the vault as.
+vault_dir=$(echo ~/${vault_path}/${vault_name})
+[ -e "${vault_dir}" ] || (echo "${vault_dir} does not exist"; exit 1)
+
+# ``real_vault_dir`` will contain the expanded path to the real path of the
+# vault, with all symbolic links dereferenced.
+real_vault_dir=$(/usr/local/bin/realpath ${vault_dir})
+[ -e "${real_vault_dir}" ] || (echo "${real_vault_dir} does not exist"; exit 1)
+
+query="$@"
+note_path="$vault_dir${query#$real_vault_dir}"
+[ -e "${note_path}" ] || (echo "${note_path} does not exist"; exit 1)
+
+echo -n "${note_path}"
